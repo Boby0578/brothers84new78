@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Brothers84 - Dungeon Crawler</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="//libtl.com/sdk.js" data-zone="10997672" data-sdk='show_10997672'></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+    <!-- ÉCRAN TITRE -->
+    <div id="title-screen" class="screen active">
+        <div class="title-container">
+            <h1 class="title-main">BROTHERS84</h1>
+            <p class="title-sub">Dungeon Crawler RPG</p>
+            <div class="title-decoration">  </div>
+        </div>
+        <div class="title-buttons">
+            <button id="btn-new" class="btn btn-green btn-large"> New Game</button>
+            <button id="btn-load" class="btn btn-blue btn-large"> Load Game</button>
+        </div>
+        <div class="title-footer">
+            <p>30 Niveaux | 50 Monstres | 7 Classes</p>
+            <p class="version">v2.0</p>
+        </div>
+    </div>
+
+    <!-- ÉCRAN CRÉATION -->
+    <div id="creation-screen" class="screen">
+        <h2 class="screen-title"> Création du Héros</h2>
+        <div class="creation-layout">
+            <div class="creation-left">
+                <div class="form-group">
+                    <label>Nom du Héros</label>
+                    <input type="text" id="char-name" placeholder="Entrez votre nom..." maxlength="12">
+                </div>
+                <div class="form-group">
+                    <label>Classe</label>
+                    <select id="char-class">
+                        <option value="Chevalier"> Chevalier</option>
+                        <option value="Barbare"> Barbare</option>
+                        <option value="Elfe"> Elfe</option>
+                        <option value="Nain"> Nain</option>
+                        <option value="Espionne"> Espionne</option>
+                        <option value="Ninja"> Ninja</option>
+                        <option value="Amazone"> Amazone</option>
+                    </select>
+                </div>
+                <div class="class-desc" id="class-desc">
+                    Guerrier équilibré avec haute défense
+                </div>
+                <div id="stats-display"></div>
+                <div class="creation-buttons">
+                    <button id="btn-roll" class="btn btn-yellow"> Lancer les dés (Pub)</button>
+                    <button id="btn-start-game" class="btn btn-green"> Commencer l'Aventure</button>
+                </div>
+            </div>
+            <div class="creation-right">
+                <div id="char-portrait" class="portrait-frame"></div>
+                <div class="portrait-label">Portrait du Héros</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÉCRAN JEU PRINCIPAL -->
+    <div id="game-screen" class="screen">
+        <div id="top-half">
+            <canvas id="dungeon-canvas" width="640" height="360"></canvas>
+            <div id="combat-ui" class="hidden">
+                <div id="enemy-container">
+                    <div class="enemy-name" id="enemy-name-display">Monstre</div>
+                    <canvas id="enemy-canvas" width="180" height="180"></canvas>
+                    <div class="bar-container">
+                        <div id="enemy-hp-bar" class="bar hp"></div>
+                        <span id="enemy-hp-text"></span>
+                    </div>
+                    <div id="enemy-atb-container">
+                        <div id="enemy-atb-bar" class="bar atb"></div>
+                    </div>
+                </div>
+                <div id="combat-effects"></div>
+                <div id="player-atb-container">
+                    <div id="player-atb-bar" class="bar atb"></div>
+                </div>
+            </div>
+            <div id="level-transition" class="hidden">
+                <div class="transition-text">
+                    <h2>Étage <span id="transition-floor">1</span></h2>
+                    <p id="transition-sub">Entrée dans le donjon...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="bottom-half">
+            <div id="left-panel">
+                <div class="panel-header">
+                    <span id="ui-name" class="name-tag"></span>
+                    <span id="ui-class" class="class-tag"></span>
+                </div>
+                <div class="panel-stats">
+                    <div class="stat-row">Niv: <span id="ui-level" class="stat-value"></span> | XP: <span id="ui-xp" class="stat-value"></span></div>
+                    <div class="bar-container hp-bar">
+                        <div id="ui-hp-bar" class="bar hp"></div>
+                        <span id="ui-hp-text"></span>
+                    </div>
+                    <div class="bar-container mp-bar">
+                        <div id="ui-mp-bar" class="bar mp"></div>
+                        <span id="ui-mp-text"></span>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <span class="stat-item"> FOR:<span id="ui-str"></span></span>
+                    <span class="stat-item"> AGI:<span id="ui-agi"></span></span>
+                    <span class="stat-item"> VIT:<span id="ui-vit"></span></span>
+                    <span class="stat-item"> END:<span id="ui-end"></span></span>
+                    <span class="stat-item"> INT:<span id="ui-int"></span></span>
+                    <span class="stat-item"> MAG:<span id="ui-mag"></span></span>
+                    <span class="stat-item"> CHA:<span id="ui-lck"></span></span>
+                </div>
+                <div id="floor-info">
+                    <span class="floor-label"> Étage</span>
+                    <span id="ui-floor" class="floor-value">1</span>
+                    <span class="floor-max">/30</span>
+                    <span id="dungeon-type" class="dungeon-type">Souterrains</span>
+                </div>
+                <div class="action-btns-vertical">
+                    <button id="btn-attack" class="action-btn btn-red"> ATTAQUE</button>
+                    <button id="btn-magic" class="action-btn btn-lightgreen"> MAGIE</button>
+                    <button id="btn-inventory" class="action-btn btn-lightblue"> INVENTAIRE</button>
+                    <button id="btn-restore" class="action-btn btn-violet"> RESTORE (PUB)</button>
+                </div>
+                <div class="bottom-buttons">
+                    <button id="btn-save" class="btn btn-grey small-btn"> Save</button>
+                    <button id="btn-load-game" class="btn btn-grey small-btn"> Load</button>
+                </div>
+            </div>
+
+            <div id="center-panel">
+                <div id="dpad-container">
+                    <button class="dpad-btn up" id="d-up"></button>
+                    <button class="dpad-btn left" id="d-left"></button>
+                    <div class="dpad-center"></div>
+                    <button class="dpad-btn right" id="d-right"></button>
+                    <button class="dpad-btn down" id="d-down"></button>
+                </div>
+                <div class="controls-hint">
+                    <span> Avancer</span>
+                    <span> Tourner</span>
+                </div>
+            </div>
+
+            <div id="right-panel">
+                <div class="minimap-header"> Carte</div>
+                <canvas id="minimap-canvas" width="200" height="180"></canvas>
+                <div class="minimap-legend">
+                    <span class="legend-item"><span class="legend-color player"></span> Joueur</span>
+                    <span class="legend-item"><span class="legend-color stairs"></span> Escalier</span>
+                    <span class="legend-item"><span class="legend-color secret"></span> Secret</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÉCRAN INVENTAIRE AMÉLIORÉ -->
+    <div id="inventory-screen" class="screen">
+        <h2 class="screen-title"> Inventaire</h2>
+        <div class="inv-main-layout">
+            <div class="inv-left">
+                <div class="inv-character-section">
+                    <canvas id="inv-char-canvas" width="200" height="280"></canvas>
+                    <div class="equipment-slots-overlay">
+                        <div class="equip-slot" data-slot="head" id="slot-head">
+                            <div class="slot-icon"></div>
+                            <div class="slot-label">Tête</div>
+                            <div class="slot-item" id="equip-head"></div>
+                        </div>
+                        <div class="equip-slot" data-slot="torso" id="slot-torso">
+                            <div class="slot-icon"></div>
+                            <div class="slot-label">Torse</div>
+                            <div class="slot-item" id="equip-torso"></div>
+                        </div>
+                        <div class="equip-slot" data-slot="hands" id="slot-hands">
+                            <div class="slot-icon"></div>
+                            <div class="slot-label">Mains</div>
+                            <div class="slot-item" id="equip-hands"></div>
+                        </div>
+                        <div class="equip-slot" data-slot="waist" id="slot-waist">
+                            <div class="slot-icon"></div>
+                            <div class="slot-label">Bassin</div>
+                            <div class="slot-item" id="equip-waist"></div>
+                        </div>
+                        <div class="equip-slot" data-slot="legs" id="slot-legs">
+                            <div class="slot-icon"></div>
+                            <div class="slot-label">Jambes</div>
+                            <div class="slot-item" id="equip-legs"></div>
+                        </div>
+                        <div class="equip-slot" data-slot="feet" id="slot-feet">
+                            <div class="slot-icon"></div>
+                            <div class="slot-label">Pieds</div>
+                            <div class="slot-item" id="equip-feet"></div>
+                        </div>
+                        <div class="equip-slot weapon-slot" data-slot="weapon" id="slot-weapon">
+                            <div class="slot-icon"></div>
+                            <div class="slot-label">Arme</div>
+                            <div class="slot-item" id="equip-weapon"></div>
+                        </div>
+                        <div class="equip-slot shield-slot" data-slot="shield" id="slot-shield">
+                            <div class="slot-icon"></div>
+                            <div class="slot-label">Bouclier</div>
+                            <div class="slot-item" id="equip-shield"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="inv-right">
+                <div class="inv-stats-panel">
+                    <h3> Statistiques</h3>
+                    <div class="inv-stats-grid">
+                        <div class="inv-stat-row">
+                            <span class="inv-stat-name"> Force</span>
+                            <span class="inv-stat-value" id="inv-str"></span>
+                            <span class="inv-stat-base" id="inv-str-base"></span>
+                        </div>
+                        <div class="inv-stat-row">
+                            <span class="inv-stat-name"> Agilité</span>
+                            <span class="inv-stat-value" id="inv-agi"></span>
+                            <span class="inv-stat-base" id="inv-agi-base"></span>
+                        </div>
+                        <div class="inv-stat-row">
+                            <span class="inv-stat-name"> Vitalité</span>
+                            <span class="inv-stat-value" id="inv-vit"></span>
+                            <span class="inv-stat-base" id="inv-vit-base"></span>
+                        </div>
+                        <div class="inv-stat-row">
+                            <span class="inv-stat-name"> Endurance</span>
+                            <span class="inv-stat-value" id="inv-end"></span>
+                            <span class="inv-stat-base" id="inv-end-base"></span>
+                        </div>
+                        <div class="inv-stat-row">
+                            <span class="inv-stat-name"> Intelligence</span>
+                            <span class="inv-stat-value" id="inv-int"></span>
+                            <span class="inv-stat-base" id="inv-int-base"></span>
+                        </div>
+                        <div class="inv-stat-row">
+                            <span class="inv-stat-name"> Magie</span>
+                            <span class="inv-stat-value" id="inv-mag"></span>
+                            <span class="inv-stat-base" id="inv-mag-base"></span>
+                        </div>
+                        <div class="inv-stat-row">
+                            <span class="inv-stat-name"> Chance</span>
+                            <span class="inv-stat-value" id="inv-lck"></span>
+                            <span class="inv-stat-base" id="inv-lck-base"></span>
+                        </div>
+                        <div class="inv-stat-divider"></div>
+                        <div class="inv-stat-row total">
+                            <span class="inv-stat-name"> Puissance</span>
+                            <span class="inv-stat-value" id="inv-power"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="inv-bag-section">
+                    <h3> Sac à dos</h3>
+                    <div id="inv-list"></div>
+                </div>
+            </div>
+        </div>
+        <div class="inv-footer">
+            <button id="btn-close-inv" class="btn btn-red btn-large"> Fermer Inventaire</button>
+        </div>
+    </div>
+
+    <!-- ÉCRAN GAME OVER -->
+    <div id="gameover-screen" class="screen">
+        <div class="gameover-content">
+            <h1> GAME OVER </h1>
+            <p class="gameover-text">Votre héros est tombé au combat...</p>
+            <p class="gameover-floor">Étage atteint: <span id="go-floor">1</span></p>
+            <button id="btn-new-chance" class="btn btn-neon-violet btn-large"> New Chance (0/10)</button>
+            <p class="gameover-hint">Regardez 10 pubs pour ressusciter</p>
+        </div>
+    </div>
+
+    <!-- ÉCRAN VICTOIRE -->
+    <div id="victory-screen" class="screen">
+        <div class="victory-content">
+            <h1> VICTOIRE ! </h1>
+            <p class="victory-text">Vous avez vaincu Fardoll et sauvé le royaume !</p>
+            <div class="victory-stats">
+                <p>Niveau final: <span id="vic-level"></span></p>
+                <p>Étages complétés: 30/30</p>
+            </div>
+            <button id="btn-restart" class="btn btn-green btn-large"> Nouvelle Partie</button>
+        </div>
+    </div>
+
+    <!-- EFFETS VISUELS -->
+    <div id="blood-splatter" class="hidden"></div>
+    <div id="magic-effect" class="hidden"></div>
+    <div id="levelup-effect" class="hidden"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
